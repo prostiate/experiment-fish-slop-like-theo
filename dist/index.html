@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FISHSLOP 3D - Submarine Aquarium Feeding Simulator</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐟</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/assets/index-BhudCGpW.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-J-M8QdQU.css">
+</head>
+<body>
+  <!-- WebGL 3D Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- In-Game Arcade HUD Overlay -->
+  <div id="hud">
+    <!-- Top Bar: Shop & Economy -->
+    <header class="top-nav">
+      <div class="logo-badge">
+        <span class="logo-icon">🤿</span>
+        <div class="logo-text">
+          <span class="title">FISHSLOP</span>
+          <span class="sub-version">3D AQUA-SIM v1.0</span>
+        </div>
+      </div>
+
+      <!-- Money Display -->
+      <div class="money-display" id="money-display">
+        <div class="coin-icon-pulse">🪙</div>
+        <div class="money-info">
+          <span class="currency-label">CREDITS</span>
+          <span class="currency-value" id="money-val">$200</span>
+        </div>
+      </div>
+
+      <!-- Quick Action Shop Buttons (Insaniquarium Style) -->
+      <div class="shop-strip" id="shop-strip">
+        <button class="shop-btn" id="btn-buy-guppy" title="Buy Baby Guppy ($100)">
+          <span class="btn-icon">🐠</span>
+          <span class="btn-name">Guppy</span>
+          <span class="btn-price">$100</span>
+          <span class="hotkey">1</span>
+        </button>
+        <button class="shop-btn" id="btn-upgrade-food" title="Upgrade Food Quality ($200)">
+          <span class="btn-icon">🥩</span>
+          <span class="btn-name" id="food-tier-name">Flakes</span>
+          <span class="btn-price" id="food-tier-price">$200</span>
+          <span class="hotkey">2</span>
+        </button>
+        <button class="shop-btn" id="btn-upgrade-capacity" title="Increase Food Drop Cap ($300)">
+          <span class="btn-icon">📦</span>
+          <span class="btn-name" id="food-cap-name">Cap +1</span>
+          <span class="btn-price" id="food-cap-price">$300</span>
+          <span class="hotkey">3</span>
+        </button>
+        <button class="shop-btn" id="btn-buy-carnivore" title="Buy Carnivore ($1000 - Eats guppies, drops Diamonds)">
+          <span class="btn-icon">🦈</span>
+          <span class="btn-name">Carnivore</span>
+          <span class="btn-price">$1000</span>
+          <span class="hotkey">4</span>
+        </button>
+        <button class="shop-btn" id="btn-buy-breeder" title="Buy Breeder ($750 - Spawns baby guppies)">
+          <span class="btn-icon">🐡</span>
+          <span class="btn-name">Breeder</span>
+          <span class="btn-price">$750</span>
+          <span class="hotkey">5</span>
+        </button>
+        <button class="shop-btn special-btn" id="btn-buy-egg" title="Buy Golden Egg Piece to win the stage!">
+          <span class="btn-icon">🥚</span>
+          <span class="btn-name" id="egg-piece-name">Egg 1/3</span>
+          <span class="btn-price" id="egg-piece-price">$1500</span>
+          <span class="hotkey">6</span>
+        </button>
+      </div>
+
+      <!-- Controls & Menu Buttons -->
+      <div class="header-actions">
+        <button class="icon-btn" id="btn-toggle-sound" title="Toggle Audio (M)">🔊</button>
+        <button class="icon-btn" id="btn-toggle-help" title="Controls & Help (H)">❓</button>
+        <button class="icon-btn" id="btn-upgrades-menu" title="Submarine Upgrades & Tech Tree (U)">⚙️</button>
+      </div>
+    </header>
+
+    <!-- Crosshair & Targeting -->
+    <div id="crosshair">
+      <div class="crosshair-ring"></div>
+      <div class="crosshair-dot"></div>
+      <div class="crosshair-lines"></div>
+      <div class="target-info" id="target-info"></div>
+    </div>
+
+    <!-- Alert Banner (Predator invasion / notifications) -->
+    <div id="alert-banner" class="alert-banner hidden">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-content">
+        <h3 id="alert-title">PREDATOR DETECTED!</h3>
+        <p id="alert-subtitle">Defend your fish with submarine torpedoes [Right-Click]!</p>
+      </div>
+    </div>
+
+    <!-- Bottom Left: Submarine Telemetry Dashboard -->
+    <div class="dashboard bottom-left">
+      <div class="telemetry-card">
+        <div class="card-header">
+          <span>SUB TELEMETRY</span>
+          <span class="status-indicator live">ONLINE</span>
+        </div>
+        <div class="gauge-row">
+          <div class="gauge">
+            <span class="label">DEPTH</span>
+            <span class="value" id="depth-val">14.2 m</span>
+          </div>
+          <div class="gauge">
+            <span class="label">SPEED</span>
+            <span class="value" id="speed-val">0.0 kn</span>
+          </div>
+          <div class="gauge">
+            <span class="label">PELLETS</span>
+            <span class="value highlight" id="pellets-val">0 / 2</span>
+          </div>
+        </div>
+
+        <!-- Boost Gauge -->
+        <div class="bar-container">
+          <div class="bar-label">
+            <span>AFTERBURNER (SHIFT)</span>
+            <span id="boost-pct">100%</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill boost-fill" id="boost-bar" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Quick Sub Controls Toggles -->
+        <div class="sub-toggles">
+          <button class="toggle-pill active" id="btn-headlights">💡 Lights [L]</button>
+          <button class="toggle-pill" id="btn-cam-mode">🎥 Cam: 3rd [C]</button>
+          <button class="toggle-pill pulse" id="btn-sonar">📡 Sonar [Q]</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Right: 3D Mini Sonar Radar -->
+    <div class="dashboard bottom-right">
+      <div class="radar-card">
+        <div class="card-header">
+          <span>ACOUSTIC SONAR</span>
+          <span class="radar-range" id="sonar-range">RANGE: 80M</span>
+        </div>
+        <div class="radar-display">
+          <canvas id="radar-canvas" width="160" height="160"></canvas>
+          <div class="radar-sweep"></div>
+          <div class="radar-center"></div>
+        </div>
+        <div class="radar-legend">
+          <span class="legend-item"><span class="dot green"></span> Fish</span>
+          <span class="legend-item"><span class="dot yellow"></span> Coin</span>
+          <span class="legend-item"><span class="dot red"></span> Danger</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Toast Notifications -->
+    <div id="toast-container"></div>
+  </div>
+
+  <!-- Upgrades & Engineering Tech Tree Modal -->
+  <div id="upgrades-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>🛠️ SUBMARINE DRYDOCK & UPGRADES</h2>
+        <button class="modal-close" id="btn-close-upgrades">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="upgrade-grid">
+          <!-- Engine Upgrade -->
+          <div class="upgrade-item" id="upg-engine">
+            <div class="upg-icon">🚀</div>
+            <div class="upg-details">
+              <h4>Cavitation Thrusters</h4>
+              <p>Increases top cruising speed and afterburner acceleration by +25%.</p>
+              <div class="upg-levels" id="upg-engine-levels">
+                <span class="pip active"></span><span class="pip"></span><span class="pip"></span>
+              </div>
+            </div>
+            <button class="btn-buy-upgrade" id="btn-upg-engine">$350</button>
+          </div>
+
+          <!-- Magnet Upgrade -->
+          <div class="upgrade-item" id="upg-magnet">
+            <div class="upg-icon">🧲</div>
+            <div class="upg-details">
+              <h4>Magnetic Hull Tractor</h4>
+              <p>Automatically vacuums up sinking coins and gems from afar.</p>
+              <div class="upg-levels" id="upg-magnet-levels">
+                <span class="pip"></span><span class="pip"></span><span class="pip"></span>
+              </div>
+            </div>
+            <button class="btn-buy-upgrade" id="btn-upg-magnet">$500</button>
+          </div>
+
+          <!-- Torpedo Weapons Upgrade -->
+          <div class="upgrade-item" id="upg-torpedo">
+            <div class="upg-icon">💣</div>
+            <div class="upg-details">
+              <h4>Plasma Torpedo Battery</h4>
+              <p>Increases torpedo fire rate, blast radius, and monster damage.</p>
+              <div class="upg-levels" id="upg-torpedo-levels">
+                <span class="pip active"></span><span class="pip"></span><span class="pip"></span>
+              </div>
+            </div>
+            <button class="btn-buy-upgrade" id="btn-upg-torpedo">$600</button>
+          </div>
+
+          <!-- Sonar Range Upgrade -->
+          <div class="upgrade-item" id="upg-sonar">
+            <div class="upg-icon">📡</div>
+            <div class="upg-details">
+              <h4>Bio-Sonar Ping</h4>
+              <p>Expands radar range and highlights hungry fish with 3D beacons.</p>
+              <div class="upg-levels" id="upg-sonar-levels">
+                <span class="pip active"></span><span class="pip"></span><span class="pip"></span>
+              </div>
+            </div>
+            <button class="btn-buy-upgrade" id="btn-upg-sonar">$400</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help & Tutorial Modal -->
+  <div id="help-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>🎮 HOW TO PLAY FISHSLOP 3D</h2>
+        <button class="modal-close" id="btn-close-help">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="guide-grid">
+          <div class="guide-section">
+            <h3>🕹️ Submarine Controls (Subnautica Style)</h3>
+            <ul>
+              <li><strong>W / S</strong>: Thrust Forward / Reverse</li>
+              <li><strong>A / D</strong>: Steer Left / Right (Yaw)</li>
+              <li><strong>SPACE</strong>: Ascend towards water surface</li>
+              <li><strong>C / CTRL</strong>: Dive down towards tank floor</li>
+              <li><strong>SHIFT</strong>: Afterburner Turbo Boost</li>
+              <li><strong>MOUSE LOOK</strong>: Click canvas to lock mouse for smooth 3D steering</li>
+              <li><strong>L</strong>: Toggle High-Beam Headlights</li>
+              <li><strong>V / C</strong>: Toggle 3rd-Person Chase / 1st-Person Cockpit View</li>
+            </ul>
+          </div>
+          <div class="guide-section">
+            <h3>🐠 Fish Feeding & Insaniquarium Economy</h3>
+            <ul>
+              <li><strong>F or LEFT CLICK</strong>: Drop food pellet from sub belly hatch.</li>
+              <li><strong>Hunger States</strong>: Fish turn green & cry when hungry. If starved, they die!</li>
+              <li><strong>Growth</strong>: Fish grow from Baby &rarr; Medium &rarr; King Guppy as they eat.</li>
+              <li><strong>Coins</strong>: Fish drop Bronze, Silver, Gold coins & Diamonds! Fly your sub over coins or use the tractor magnet to collect them.</li>
+              <li><strong>RIGHT CLICK / E</strong>: Fire defense torpedoes at invading tank monsters!</li>
+              <li><strong>VICTORY GOAL</strong>: Buy all 3 Egg Pieces from the top bar to hatch the mythical Golden Aqua-Dragon!</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="btn-start-game">START DIVING!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Intro Screen Overlay -->
+  <div id="intro-overlay" class="intro-screen">
+    <div class="intro-box">
+      <div class="intro-badge">DEEP SEA PROTOTYPE</div>
+      <h1 class="glitch-title">FISHSLOP 3D</h1>
+      <p class="tagline">Insaniquarium Fish Feeding &times; Subnautica 3D Submarine Swimming</p>
+      <div class="intro-features">
+        <div class="feat"><span>🚢</span> Full 3D 6-DOF Submarine Physics</div>
+        <div class="feat"><span>🐟</span> Realistic Sinusoidal Fish AI & Flocking</div>
+        <div class="feat"><span>💎</span> Deep Mini-Economy & Upgrades</div>
+        <div class="feat"><span>👾</span> Hostile Predator Invasions & Torpedo Defense</div>
+      </div>
+      <button class="btn-launch" id="btn-launch">
+        <span class="btn-pulse-ring"></span>
+        <span>DIVE INTO TANK</span>
+      </button>
+      <div class="hint-text">Click anywhere to engage submarine controls</div>
+    </div>
+  </div>
+
+</body>
+</html>
